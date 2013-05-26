@@ -1,0 +1,49 @@
+//
+// Radioactive Source Detection using BLOG
+// author: Bryan Cutler
+//
+
+// Type Declarations
+type Cs137;
+type Counts;
+
+// Counts Originate from a Radioactive Source
+origin Cs137 Source(Counts);
+
+// Prior Beliefs of Number of Sources
+//#Cs137 ~ UniformInt(0,2);
+#Cs137 ~ Categorical({0 -> 0.5, 1 -> 0.3, 2 -> 0.2});
+
+// The Source Model for a Specific Detector - Counts per Second at 1 meter distance
+//fixed Real Cs137_cps_at_1m = 1000;
+
+// Counts per Second from Background Radiation
+#Counts ~ Poisson(50);
+
+// Each Source is at a Random Distance from the Detector 
+random Real SourceDistance(Cs137 a) ~ UniformReal(2.0, 10.0);
+
+// Unknown Number of Sources - Expected Counts Decrease by Inverse-Square Law
+#Counts(Source=a)
+	// This statement will not parse /////////////////////////
+	// ~ Poisson( Cs137_cps_at_1m / SourceDistance(a)^2 )
+	//////////////////////////////////////////////////////////
+	if SourceDistance(a) > 9.0 then ~ Poisson(10) 			// 1000 / 10^2
+	else if SourceDistance(a) > 8.0 then ~ Poisson(12.35)	// 1000 / 9^2
+	else if SourceDistance(a) > 7.0 then ~ Poisson(15.63)	// 1000 / 8^2
+	else if SourceDistance(a) > 6.0 then ~ Poisson(20.41)	// 1000 / 7^2
+	else if SourceDistance(a) > 5.0 then ~ Poisson(27.78)	// 1000 / 6^2
+	else if SourceDistance(a) > 4.0 then ~ Poisson(40.00)	// 1000 / 5^2
+	else if SourceDistance(a) > 3.0 then ~ Poisson(62.50)	// 1000 / 4^2
+	else if SourceDistance(a) > 2.0 then ~ Poisson(111.1)	// 1000 / 3^2
+	else if SourceDistance(a) > 1.0 then ~ Poisson(250.0)	// 1000 / 2^2
+	else ~ Poisson(500);									// 1000 / 2
+
+// Evidence Sampled by the Detector
+obs #Counts = 185;
+
+// Query Belief in Number of Sources
+query #{Cs137 a};
+
+// Query Distance of Sources
+//query SourceDistance(Source(#Counts));
